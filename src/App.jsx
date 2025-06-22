@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import { Play, Clock, Eye } from "lucide-react";
+import simularSistema from "./logica";
 
 export default function App() {
   const [parameters, setParameters] = useState({
     timeX: 0,
+    minutoInicio: 0,
     iterations: 0,
-    startHour: 0,
-    displayCount: 10,
     limiteInferior: 13,
     limiteSuperior: 17,
     complejidad1: 30,
     complejidad2: 50,
   });
+
+  const [simulaciones, setSimulaciones] = useState([]);
 
   const handleParameterChange = (key, value) => {
     setParameters((prev) => ({
@@ -22,6 +24,8 @@ export default function App() {
 
   const simulateSystem = async () => {
     // Simular el proceso de simulación
+    const simulacion = simularSistema(parameters);
+    setSimulaciones(simulacion);
   };
 
   return (
@@ -41,7 +45,7 @@ export default function App() {
               </label>
               <input
                 type="number"
-                value={parameters.timeX}
+                placeholder="Ingresar valor"
                 onChange={(e) => handleParameterChange("timeX", e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 min="1"
@@ -55,9 +59,9 @@ export default function App() {
               </label>
               <input
                 type="number"
-                value={parameters.startHour}
+                placeholder="Ingresar valor"
                 onChange={(e) =>
-                  handleParameterChange("startHour", e.target.value)
+                  handleParameterChange("minutoInicio", e.target.value)
                 }
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 min="0"
@@ -71,7 +75,7 @@ export default function App() {
               </label>
               <input
                 type="number"
-                value={parameters.iterations}
+                placeholder="Ingresar valor"
                 onChange={(e) =>
                   handleParameterChange("iterations", e.target.value)
                 }
@@ -173,6 +177,40 @@ export default function App() {
           </div>
         </div>
       </div>
+      {simulaciones.length > 0 && (
+        <div className="mt-10 bg-white p-6 rounded-xl shadow-lg overflow-auto">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">
+            Resultados de la Simulación
+          </h2>
+          <table className="min-w-full text-sm text-gray-700 border border-gray-300">
+            <thead className="bg-gray-100 sticky top-0">
+              <tr>
+                {Object.keys(simulaciones[0]).map((key) => (
+                  <th
+                    key={key}
+                    className="px-3 py-2 border border-gray-300 text-left"
+                  >
+                    {key}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {simulaciones.map((fila, i) => (
+                <tr key={i} className="odd:bg-white even:bg-gray-50">
+                  {Object.values(fila).map((valor, j) => (
+                    <td key={j} className="px-3 py-2 border border-gray-200">
+                      {typeof valor === "object"
+                        ? JSON.stringify(valor)
+                        : valor}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
