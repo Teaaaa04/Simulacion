@@ -254,10 +254,19 @@ function generarIteracion(
       }
     }
 
-    // Sacar al cliente que estaba en reparacion
-    nuevaColaObjetos = nuevaColaObjetos.filter(
-      (cliente) => cliente.estado !== "En reparación"
-    );
+    // Marcar al cliente que estaba en reparación como atendido
+    nuevaColaObjetos = nuevaColaObjetos.map((cliente) => {
+      if (cliente.estado === "En reparación") {
+        return {
+          ...cliente,
+          estado: "-",
+          tiempoLlegada: "-",
+          horaInicioReparacion: "-",
+          complejidad: "-",
+        };
+      }
+      return cliente;
+    });
 
     if (colaRelojes > 0) {
       colaRelojes--;
