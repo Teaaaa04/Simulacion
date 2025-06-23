@@ -11,6 +11,7 @@ export default function App() {
     limiteSuperior: 17,
     complejidad1: 30,
     complejidad2: 50,
+    a: 1,
   });
 
   const [simulaciones, setSimulaciones] = useState([]);
@@ -23,6 +24,33 @@ export default function App() {
   };
 
   const simulateSystem = async () => {
+    // Validar parámetros
+    if (
+      parameters.timeX < 0 ||
+      parameters.minutoInicio < 0 ||
+      parameters.limiteInferior < 0 ||
+      parameters.limiteSuperior < 0 ||
+      parameters.complejidad1 < 0 ||
+      parameters.complejidad2 < 0 ||
+      parameters.a < 0
+    ) {
+      alert("Por favor, ingrese valores positivos para los parámetros.");
+      return;
+    }
+
+    if (parameters.iterations < 1) {
+      alert("La cantidad de iteraciones debe ser al menos 1.");
+      return;
+    }
+
+    // Validar que el límite inferior sea menor que el superior
+    if (parameters.limiteInferior >= parameters.limiteSuperior) {
+      alert(
+        "El límite superior debe ser mayor que el límite inferior para la distribución"
+      );
+      return;
+    }
+
     // Simular el proceso de simulación
     const simulacion = simularSistema(parameters);
     setSimulaciones(simulacion);
@@ -41,8 +69,8 @@ export default function App() {
           </h1>
 
           {/* Parámetros de entrada */}
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 mb-8">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 lg:col-span-3">
+          <div className="flex gap-8 mb-8 w-full ">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 justify-between w-2/5">
               <h3 className="text-lg font-semibold text-blue-800 mb-6">
                 Parámetros de Simulación
               </h3>
@@ -68,6 +96,7 @@ export default function App() {
                 <div className="bg-white p-4 rounded-lg border border-blue-300">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Mostrar a partir del minuto (j)
+                    <Eye className="w-4 h-4" />
                   </label>
                   <input
                     type="number"
@@ -97,12 +126,13 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 lg:col-span-3">
+            {/* Parámetros del sistema */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 lg:col-span-3 w-3/5">
               <h3 className="text-lg font-semibold text-red-800 mb-6">
                 Parámetros del Sistema
               </h3>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="flex gap-6">
                 {/* Distribución de Llegada de Relojes */}
                 <div className="bg-white rounded-lg p-4 border border-red-300">
                   <h4 className="text-md font-semibold text-red-700 mb-4 text-center">
@@ -156,7 +186,7 @@ export default function App() {
                       </label>
                       <input
                         type="number"
-                        value={parameters.complejidad1}
+                        defaultValue={parameters.complejidad1}
                         onChange={(e) =>
                           handleParameterChange("complejidad1", e.target.value)
                         }
@@ -169,13 +199,33 @@ export default function App() {
                       </label>
                       <input
                         type="number"
-                        value={parameters.complejidad2}
+                        defaultValue={parameters.complejidad2}
                         onChange={(e) =>
                           handleParameterChange("complejidad2", e.target.value)
                         }
                         className="w-full p-2 border border-red-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Parámetro a */}
+                <div className="bg-white rounded-lg p-4 border border-red-300">
+                  <h4 className="text-md font-semibold text-red-700 mb-4 text-center">
+                    Parámetro a
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-sm font-medium text-red-700">
+                      Valor de a
+                    </label>
+                    <input
+                      type="number"
+                      defaultValue={parameters.a}
+                      onChange={(e) =>
+                        handleParameterChange("a", e.target.value)
+                      }
+                      className="w-full p-2 border border-red-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
                   </div>
                 </div>
               </div>
@@ -217,7 +267,7 @@ export default function App() {
                   .map((key) => (
                     <th
                       key={key}
-                      className="px-3 py-2 border border-gray-300 text-left"
+                      className="px-3 py-2 border border-gray-300 text-left break-words max-w-60px]"
                     >
                       {key}
                     </th>
@@ -232,28 +282,31 @@ export default function App() {
                   );
                   const headers = [];
                   for (let i = 0; i < maxObjetos; i++) {
+                    // si i es par, cabcera roja, sino azul
+                    const bgColor = i % 2 === 0 ? "bg-red-100" : "bg-blue-100";
+
                     headers.push(
                       <th
                         key={`Estado-${i}`}
-                        className="px-3 py-2 border border-gray-300"
+                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
                       >
                         Estado Reloj {i + 1}
                       </th>,
                       <th
                         key={`Llegada-${i}`}
-                        className="px-3 py-2 border border-gray-300"
+                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
                       >
                         Llegada Reloj {i + 1}
                       </th>,
                       <th
                         key={`Complejidad-${i}`}
-                        className="px-3 py-2 border border-gray-300"
+                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
                       >
                         Complejidad Reloj {i + 1}
                       </th>,
                       <th
                         key={`Inicio-${i}`}
-                        className="px-3 py-2 border border-gray-300"
+                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
                       >
                         Inicio Reparación {i + 1}
                       </th>
