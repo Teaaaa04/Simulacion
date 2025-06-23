@@ -23,6 +23,7 @@ export default function simularSistema(parametros) {
   let finReparacion = "-";
   let proximaLlegada = "-";
   let colaRelojes = 0;
+  let objetosTemporales = [];
 
   while (horaActual < timeX && numeroIteracion < 10000) {
     const evento = generarIteracion(
@@ -39,15 +40,18 @@ export default function simularSistema(parametros) {
       complejidad2,
       colaRelojes,
       finReparacion,
-      proximaLlegada
+      proximaLlegada,
+      objetosTemporales
     );
-
-    console.log(`Iteración ${numeroIteracion + 1}:`, evento);
 
     numeroIteracion++;
     finReparacion = evento.FinReparacion;
     proximaLlegada = evento.ProximaLlegada;
     colaRelojes = evento.largoColaRelojes;
+    contadorComplejidad30 = evento.ContadorComp30;
+    contadorComplejidad50 = evento.ContadorComp50;
+    acumuladorTiempoComplejidad30 = evento.AcumuladorTiempoComp30;
+    acumuladorTiempoComplejidad50 = evento.AcumuladorTiempoComp50;
 
     if (
       evento.ProximaLlegada < evento.FinReparacion ||
@@ -62,6 +66,9 @@ export default function simularSistema(parametros) {
       proximoEvento = "Fin de reparación";
     }
 
+    // CORRECCIÓN: Usar copia profunda para evitar referencias compartidas
+    objetosTemporales = copiarObjetosProfundo(evento.ObjetosTemporales);
+
     simulacion.push(evento);
   }
 
@@ -71,19 +78,20 @@ export default function simularSistema(parametros) {
     NumeroFila: numeroIteracion,
     Reloj: timeX,
     Evento: "Fin simulación",
-    RND: "-", // No hay RND en el fin de simulación
-    TiempoLlegada: "-", // No hay tiempo de llegada en el fin de simulación
+    RND: "-",
+    TiempoLlegada: "-",
     ProximaLlegada: proximaLlegada,
-    RndComplejidad: "-", // Inicialmente no hay complejidad
-    Complejidad: "-", // Inicialmente no hay complejidad
-    TiempoReparacion: "-", // Inicialmente no hay reparación
-    FinReparacion: finReparacion, // Inicialmente no hay fin de reparación
-    ContadorComp30: contadorComplejidad30, // Contador para complejidad 30
-    ContadorComp50: contadorComplejidad50, // Contador para complejidad 50
-    AcumuladorTiempoComp30: acumuladorTiempoComplejidad30, // Acumulador para complejidad 30
-    AcumuladorTiempoComp50: acumuladorTiempoComplejidad50, // Acumulador para complejidad 50
-    EstadoRelojero: finReparacion == "-" ? "Libre" : "Ocupado", // Estado del relojero
-    largoColaRelojes: colaRelojes, // Largo de la cola de relojes
+    RndComplejidad: "-",
+    Complejidad: "-",
+    TiempoReparacion: "-",
+    FinReparacion: finReparacion,
+    ContadorComp30: contadorComplejidad30,
+    ContadorComp50: contadorComplejidad50,
+    AcumuladorTiempoComp30: acumuladorTiempoComplejidad30,
+    AcumuladorTiempoComp50: acumuladorTiempoComplejidad50,
+    EstadoRelojero: finReparacion == "-" ? "Libre" : "Ocupado",
+    largoColaRelojes: colaRelojes,
+    ObjetosTemporales: copiarObjetosProfundo(objetosTemporales),
   };
 
   simulacion.push(finSimulacion);
@@ -91,6 +99,16 @@ export default function simularSistema(parametros) {
   let simulacion2 = recortarVector(minutoInicio, iterations, simulacion);
 
   return simulacion2;
+}
+
+// NUEVA FUNCIÓN: Crear copia profunda de objetos
+function copiarObjetosProfundo(objetos) {
+  return objetos.map((objeto) => ({
+    estado: objeto.estado,
+    tiempoLlegada: objeto.tiempoLlegada,
+    complejidad: objeto.complejidad,
+    horaInicioReparacion: objeto.horaInicioReparacion,
+  }));
 }
 
 function generarIteracion(
@@ -107,7 +125,8 @@ function generarIteracion(
   complejidad2,
   colaRelojes,
   finReparacion,
-  proximaLlegada
+  proximaLlegada,
+  objetosTemporales
 ) {
   let evento = {};
   if (eventoActual === "Inicio") {
@@ -125,19 +144,31 @@ function generarIteracion(
       RND: rndLlegadaCliente,
       TiempoLlegada: tiempoLlegada,
       ProximaLlegada: horaActual + tiempoLlegada,
-      RndComplejidad: "-", // Inicialmente no hay complejidad
-      Complejidad: "-", // Inicialmente no hay complejidad
-      TiempoReparacion: "-", // Inicialmente no hay reparación
-      FinReparacion: "-", // Inicialmente no hay fin de reparación
-      ContadorComp30: contadorComplejidad30, // Contador para complejidad 30
-      ContadorComp50: contadorComplejidad50, // Contador para complejidad 50
-      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30, // Acumulador para complejidad 30
-      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50, // Acumulador para complejidad 50
-      EstadoRelojero: "Libre", // Estado del relojero
-      largoColaRelojes: colaRelojes, // Largo de la cola de relojes
+      RndComplejidad: "-",
+      Complejidad: "-",
+      TiempoReparacion: "-",
+      FinReparacion: "-",
+      ContadorComp30: contadorComplejidad30,
+      ContadorComp50: contadorComplejidad50,
+      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30,
+      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50,
+      EstadoRelojero: "Libre",
+      largoColaRelojes: colaRelojes,
+      ObjetosTemporales: [],
     };
   } else if (eventoActual === "Llegada de cliente") {
-    // Generar un número aleatorio para la llegada del primer cliente
+    // CORRECCIÓN: Crear copia profunda de objetos temporales existentes
+    let nuevaColaObjetos2 = copiarObjetosProfundo(objetosTemporales);
+    console.log("Objetos temporales antes de la llegada:", nuevaColaObjetos2);
+
+    // Crear nuevo cliente
+    let cliente = {
+      estado: "Sin determinar",
+      tiempoLlegada: horaActual,
+      complejidad: "-",
+      horaInicioReparacion: "-",
+    };
+
     let rndLlegadaCliente = Math.round(Math.random() * 100) / 100;
 
     // Calcular el tiempo de llegada del primer cliente
@@ -149,16 +180,27 @@ function generarIteracion(
     if (finReparacion === "-") {
       rndComplejidad = Math.round(Math.random() * 100) / 100;
       complejidad = rndComplejidad < 0.5 ? complejidad1 : complejidad2;
-      tiempoReparacion = 15;
-
+      tiempoReparacion = calcularTiempoReparacionRK4(
+        0.5,
+        complejidad,
+        colaRelojes
+      );
       finReparacion = horaActual + tiempoReparacion;
+
+      cliente.estado = "En reparación";
+      cliente.tiempoLlegada = "-"; // No es necesario el tiempo de llegada una vez en reparación
+      cliente.horaInicioReparacion = horaActual;
+      cliente.complejidad = complejidad;
     } else {
       // Si hay un fin de reparación pendiente, no se genera una nueva complejidad
       rndComplejidad = "-";
-      complejidad = "-";
       tiempoReparacion = "-";
       colaRelojes++;
+      cliente.estado = "En cola";
+      cliente.complejidad = "-";
     }
+
+    nuevaColaObjetos2.push(cliente);
 
     evento = {
       NumeroFila: numeroFila,
@@ -167,16 +209,17 @@ function generarIteracion(
       RND: rndLlegadaCliente,
       TiempoLlegada: tiempoLlegada,
       ProximaLlegada: horaActual + tiempoLlegada,
-      RndComplejidad: rndComplejidad, // Inicialmente no hay complejidad
-      Complejidad: complejidad, // Inicialmente no hay complejidad
-      TiempoReparacion: tiempoReparacion, // Inicialmente no hay reparación
-      FinReparacion: finReparacion, // Inicialmente no hay fin de reparación
-      ContadorComp30: contadorComplejidad30, // Contador para complejidad 30
-      ContadorComp50: contadorComplejidad50, // Contador para complejidad 50
-      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30, // Acumulador para complejidad 30
-      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50, // Acumulador para complejidad 50
-      EstadoRelojero: "Ocupado", // Estado del relojero
-      largoColaRelojes: colaRelojes, // Largo de la cola de relojes
+      RndComplejidad: rndComplejidad,
+      Complejidad: complejidad,
+      TiempoReparacion: tiempoReparacion,
+      FinReparacion: finReparacion,
+      ContadorComp30: contadorComplejidad30,
+      ContadorComp50: contadorComplejidad50,
+      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30,
+      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50,
+      EstadoRelojero: "Ocupado",
+      largoColaRelojes: colaRelojes,
+      ObjetosTemporales: nuevaColaObjetos2,
     };
 
     return evento;
@@ -188,24 +231,68 @@ function generarIteracion(
     let complejidad = "-";
     let tiempoReparacion = "-";
 
+    // CORRECCIÓN: Crear copia profunda antes de modificar
+    let nuevaColaObjetos = copiarObjetosProfundo(objetosTemporales);
+
+    const clienteEnReparacion = nuevaColaObjetos.find(
+      (cliente) => cliente.estado === "En reparación"
+    );
+
+    if (clienteEnReparacion) {
+      // 🔄 2. Actualizar contadores y acumuladores según complejidad
+      const complejidadCliente = clienteEnReparacion.complejidad;
+      const inicioReparacion = clienteEnReparacion.horaInicioReparacion;
+
+      const tiempoAcumulado = horaActual - inicioReparacion;
+
+      if (complejidadCliente === 30) {
+        contadorComplejidad30++;
+        acumuladorTiempoComplejidad30 += tiempoAcumulado;
+      } else if (complejidadCliente === 50) {
+        contadorComplejidad50++;
+        acumuladorTiempoComplejidad50 += tiempoAcumulado;
+      }
+    }
+
+    // Sacar al cliente que estaba en reparacion
+    nuevaColaObjetos = nuevaColaObjetos.filter(
+      (cliente) => cliente.estado !== "En reparación"
+    );
+
     if (colaRelojes > 0) {
-      // Si hay clientes en la cola, se repara el siguiente cliente
       colaRelojes--;
-      // Generar un número aleatorio para la complejidad del cliente
-      rndComplejidad = Math.round(Math.random() * 100) / 100;
-      complejidad = rndComplejidad < 0.5 ? complejidad1 : complejidad2;
 
-      // Calcular el tiempo de reparación basado en la complejidad
-      tiempoReparacion = calcularTiempoReparacionRK4(
-        0.5,
-        complejidad,
-        colaRelojes
-      );
-      // Calcular el fin de reparación
-      finReparacion = horaActual + tiempoReparacion;
+      // Buscar el cliente en espera con menor llegada y modificarlo
+      let indiceMin = -1;
+      let minLlegada = Infinity;
 
-      // Actualizar el estado del relojero
-      estadoRelojero = "Ocupado";
+      for (let i = 0; i < nuevaColaObjetos.length; i++) {
+        if (
+          nuevaColaObjetos[i].estado === "En cola" &&
+          nuevaColaObjetos[i].tiempoLlegada < minLlegada
+        ) {
+          minLlegada = nuevaColaObjetos[i].tiempoLlegada;
+          indiceMin = i;
+        }
+      }
+
+      if (indiceMin !== -1) {
+        nuevaColaObjetos[indiceMin].estado = "En reparación";
+        nuevaColaObjetos[indiceMin].horaInicioReparacion = horaActual;
+        nuevaColaObjetos[indiceMin].tiempoLlegada = "-";
+        rndComplejidad = Math.round(Math.random() * 100) / 100;
+        complejidad = rndComplejidad < 0.5 ? complejidad1 : complejidad2;
+        nuevaColaObjetos[indiceMin].complejidad = complejidad;
+
+        tiempoReparacion = calcularTiempoReparacionRK4(
+          0.5,
+          complejidad,
+          colaRelojes
+        );
+
+        finReparacion = horaActual + tiempoReparacion;
+        estadoRelojero = "Ocupado";
+      }
     } else {
       // Si no hay clientes en la cola, el relojero queda libre
       finReparacion = "-";
@@ -219,16 +306,17 @@ function generarIteracion(
       RND: rndLlegadaCliente,
       TiempoLlegada: tiempoLlegada,
       ProximaLlegada: proximaLlegada,
-      RndComplejidad: rndComplejidad, // Inicialmente no hay complejidad
-      Complejidad: complejidad, // Inicialmente no hay complejidad
-      TiempoReparacion: tiempoReparacion, // Inicialmente no hay reparación
-      FinReparacion: finReparacion, // Inicialmente no hay fin de reparación
-      ContadorComp30: contadorComplejidad30, // Contador para complejidad 30
-      ContadorComp50: contadorComplejidad50, // Contador para complejidad 50
-      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30, // Acumulador para complejidad 30
-      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50, // Acumulador para complejidad 50
-      EstadoRelojero: estadoRelojero, // Estado del relojero
-      largoColaRelojes: colaRelojes, // Largo de la cola de relojes
+      RndComplejidad: rndComplejidad,
+      Complejidad: complejidad,
+      TiempoReparacion: tiempoReparacion,
+      FinReparacion: finReparacion,
+      ContadorComp30: contadorComplejidad30,
+      ContadorComp50: contadorComplejidad50,
+      AcumuladorTiempoComp30: acumuladorTiempoComplejidad30,
+      AcumuladorTiempoComp50: acumuladorTiempoComplejidad50,
+      EstadoRelojero: estadoRelojero,
+      largoColaRelojes: colaRelojes,
+      ObjetosTemporales: nuevaColaObjetos,
     };
   }
   return evento;
@@ -251,11 +339,9 @@ function calcularTiempoReparacionRK4(a, C, R) {
   let t = 0;
   let D = 0;
 
-  console.log(a, C, R);
-
   // f(t, D) = 0.8*C + t + a*R (independiente de D)
   function f(t, D) {
-    return 0.8 * C + t + a * R;
+    return 0.8 * D + t + a * R;
   }
 
   while (D < C) {

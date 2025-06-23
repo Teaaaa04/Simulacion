@@ -211,33 +211,122 @@ export default function App() {
           <table className="min-w-full text-sm text-gray-700 border border-gray-300">
             <thead className="bg-gray-100 sticky top-0">
               <tr>
-                {Object.keys(simulaciones[0]).map((key) => (
-                  <th
-                    key={key}
-                    className="px-3 py-2 border border-gray-300 text-left"
-                  >
-                    {key}
-                  </th>
-                ))}
+                {/* Encabezados base */}
+                {Object.keys(simulaciones[0])
+                  .filter((key) => key !== "ObjetosTemporales")
+                  .map((key) => (
+                    <th
+                      key={key}
+                      className="px-3 py-2 border border-gray-300 text-left"
+                    >
+                      {key}
+                    </th>
+                  ))}
+
+                {/* Detectar cuántos relojes como máximo hay */}
+                {(() => {
+                  const maxObjetos = Math.max(
+                    ...simulaciones.map(
+                      (fila) => fila.ObjetosTemporales?.length || 0
+                    )
+                  );
+                  const headers = [];
+                  for (let i = 0; i < maxObjetos; i++) {
+                    headers.push(
+                      <th
+                        key={`Estado-${i}`}
+                        className="px-3 py-2 border border-gray-300"
+                      >
+                        Estado Reloj {i + 1}
+                      </th>,
+                      <th
+                        key={`Llegada-${i}`}
+                        className="px-3 py-2 border border-gray-300"
+                      >
+                        Llegada Reloj {i + 1}
+                      </th>,
+                      <th
+                        key={`Complejidad-${i}`}
+                        className="px-3 py-2 border border-gray-300"
+                      >
+                        Complejidad Reloj {i + 1}
+                      </th>,
+                      <th
+                        key={`Inicio-${i}`}
+                        className="px-3 py-2 border border-gray-300"
+                      >
+                        Inicio Reparación {i + 1}
+                      </th>
+                    );
+                  }
+                  return headers;
+                })()}
               </tr>
             </thead>
+
             <tbody>
               {simulaciones.map((fila, i) => (
                 <tr
                   key={i}
                   className={
                     i === simulaciones.length - 1
-                      ? "bg-red-700 text-white" // Última fila: fondo rojo y texto blanco
+                      ? "bg-red-700 text-white"
                       : "odd:bg-white even:bg-gray-50"
                   }
                 >
-                  {Object.values(fila).map((valor, j) => (
-                    <td key={j} className="px-3 py-2 border border-gray-200">
-                      {typeof valor === "object"
-                        ? JSON.stringify(valor)
-                        : valor}
-                    </td>
-                  ))}
+                  {/* Valores base excepto ObjetosTemporales */}
+                  {Object.entries(fila)
+                    .filter(([key]) => key !== "ObjetosTemporales")
+                    .map(([key, valor], j) => (
+                      <td key={j} className="px-3 py-2 border border-gray-200">
+                        {typeof valor === "object"
+                          ? JSON.stringify(valor)
+                          : valor}
+                      </td>
+                    ))}
+
+                  {/* Expandir objetos temporales */}
+                  {(() => {
+                    const columnas = [];
+                    const objetos = fila.ObjetosTemporales || [];
+                    const maxObjetos = Math.max(
+                      ...simulaciones.map(
+                        (f) => f.ObjetosTemporales?.length || 0
+                      )
+                    );
+
+                    for (let k = 0; k < maxObjetos; k++) {
+                      const obj = objetos[k];
+                      columnas.push(
+                        <td
+                          key={`estado-${i}-${k}`}
+                          className="px-3 py-2 border border-gray-200"
+                        >
+                          {obj ? obj.estado : "-"}
+                        </td>,
+                        <td
+                          key={`llegada-${i}-${k}`}
+                          className="px-3 py-2 border border-gray-200"
+                        >
+                          {obj ? obj.tiempoLlegada : "-"}
+                        </td>,
+                        <td
+                          key={`comp-${i}-${k}`}
+                          className="px-3 py-2 border border-gray-200"
+                        >
+                          {obj ? obj.complejidad : "-"}
+                        </td>,
+                        <td
+                          key={`inicio-${i}-${k}`}
+                          className="px-3 py-2 border border-gray-200"
+                        >
+                          {obj ? obj.horaInicioReparacion : "-"}
+                        </td>
+                      );
+                    }
+
+                    return columnas;
+                  })()}
                 </tr>
               ))}
             </tbody>
