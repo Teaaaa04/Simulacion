@@ -305,12 +305,7 @@ export default function App() {
                         >
                           {obj ? obj.estado : "-"}
                         </td>,
-                        <td
-                          key={`llegada-${i}-${k}`}
-                          className="px-3 py-2 border border-gray-200"
-                        >
-                          {obj ? obj.tiempoLlegada : "-"}
-                        </td>,
+
                         <td
                           key={`comp-${i}-${k}`}
                           className="px-3 py-2 border border-gray-200"
