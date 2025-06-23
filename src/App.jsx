@@ -213,7 +213,10 @@ export default function App() {
               <tr>
                 {/* Encabezados base */}
                 {Object.keys(simulaciones[0])
-                  .filter((key) => key !== "ObjetosTemporales")
+                  .filter(
+                    (key) =>
+                      key !== "ObjetosTemporales" && key !== "IdsClientes"
+                  )
                   .map((key) => (
                     <th
                       key={key}
@@ -239,12 +242,7 @@ export default function App() {
                       >
                         Estado Reloj {i + 1}
                       </th>,
-                      <th
-                        key={`Llegada-${i}`}
-                        className="px-3 py-2 border border-gray-300"
-                      >
-                        Llegada Reloj {i + 1}
-                      </th>,
+
                       <th
                         key={`Complejidad-${i}`}
                         className="px-3 py-2 border border-gray-300"
@@ -276,7 +274,10 @@ export default function App() {
                 >
                   {/* Valores base excepto ObjetosTemporales */}
                   {Object.entries(fila)
-                    .filter(([key]) => key !== "ObjetosTemporales")
+                    .filter(
+                      ([key]) =>
+                        key !== "ObjetosTemporales" && key !== "IdsClientes"
+                    )
                     .map(([key, valor], j) => (
                       <td key={j} className="px-3 py-2 border border-gray-200">
                         {typeof valor === "object"

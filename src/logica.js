@@ -20,6 +20,8 @@ export default function simularSistema(parametros) {
   let acumuladorTiempoComplejidad30 = 0;
   let acumuladorTiempoComplejidad50 = 0;
 
+  let idsClientes = 1;
+
   let finReparacion = "-";
   let proximaLlegada = "-";
   let colaRelojes = 0;
@@ -41,10 +43,12 @@ export default function simularSistema(parametros) {
       colaRelojes,
       finReparacion,
       proximaLlegada,
-      objetosTemporales
+      objetosTemporales,
+      idsClientes
     );
 
     numeroIteracion++;
+    idsClientes = evento.IdsClientes;
     finReparacion = evento.FinReparacion;
     proximaLlegada = evento.ProximaLlegada;
     colaRelojes = evento.largoColaRelojes;
@@ -92,6 +96,7 @@ export default function simularSistema(parametros) {
     EstadoRelojero: finReparacion == "-" ? "Libre" : "Ocupado",
     largoColaRelojes: colaRelojes,
     ObjetosTemporales: copiarObjetosProfundo(objetosTemporales),
+    IdsClientes: idsClientes, // ID del último cliente procesado
   };
 
   simulacion.push(finSimulacion);
@@ -104,8 +109,8 @@ export default function simularSistema(parametros) {
 // NUEVA FUNCIÓN: Crear copia profunda de objetos
 function copiarObjetosProfundo(objetos) {
   return objetos.map((objeto) => ({
+    id: objeto.id,
     estado: objeto.estado,
-    tiempoLlegada: objeto.tiempoLlegada,
     complejidad: objeto.complejidad,
     horaInicioReparacion: objeto.horaInicioReparacion,
   }));
@@ -126,7 +131,8 @@ function generarIteracion(
   colaRelojes,
   finReparacion,
   proximaLlegada,
-  objetosTemporales
+  objetosTemporales,
+  IdsClientes
 ) {
   let evento = {};
   if (eventoActual === "Inicio") {
@@ -155,16 +161,16 @@ function generarIteracion(
       EstadoRelojero: "Libre",
       largoColaRelojes: colaRelojes,
       ObjetosTemporales: [],
+      IdsClientes: IdsClientes, // ID del primer cliente
     };
   } else if (eventoActual === "Llegada de cliente") {
     // CORRECCIÓN: Crear copia profunda de objetos temporales existentes
     let nuevaColaObjetos2 = copiarObjetosProfundo(objetosTemporales);
-    console.log("Objetos temporales antes de la llegada:", nuevaColaObjetos2);
 
     // Crear nuevo cliente
     let cliente = {
+      id: IdsClientes,
       estado: "Sin determinar",
-      tiempoLlegada: horaActual,
       complejidad: "-",
       horaInicioReparacion: "-",
     };
@@ -188,7 +194,6 @@ function generarIteracion(
       finReparacion = horaActual + tiempoReparacion;
 
       cliente.estado = "En reparación";
-      cliente.tiempoLlegada = "-"; // No es necesario el tiempo de llegada una vez en reparación
       cliente.horaInicioReparacion = horaActual;
       cliente.complejidad = complejidad;
     } else {
@@ -220,6 +225,7 @@ function generarIteracion(
       EstadoRelojero: "Ocupado",
       largoColaRelojes: colaRelojes,
       ObjetosTemporales: nuevaColaObjetos2,
+      IdsClientes: IdsClientes + 1, // Incrementar el ID del próximo cliente
     };
 
     return evento;
@@ -260,7 +266,6 @@ function generarIteracion(
         return {
           ...cliente,
           estado: "-",
-          tiempoLlegada: "-",
           horaInicioReparacion: "-",
           complejidad: "-",
         };
@@ -273,14 +278,14 @@ function generarIteracion(
 
       // Buscar el cliente en espera con menor llegada y modificarlo
       let indiceMin = -1;
-      let minLlegada = Infinity;
+      let minId = Infinity;
 
       for (let i = 0; i < nuevaColaObjetos.length; i++) {
         if (
           nuevaColaObjetos[i].estado === "En cola" &&
-          nuevaColaObjetos[i].tiempoLlegada < minLlegada
+          nuevaColaObjetos[i].id < minId
         ) {
-          minLlegada = nuevaColaObjetos[i].tiempoLlegada;
+          minId = nuevaColaObjetos[i].id;
           indiceMin = i;
         }
       }
@@ -288,7 +293,6 @@ function generarIteracion(
       if (indiceMin !== -1) {
         nuevaColaObjetos[indiceMin].estado = "En reparación";
         nuevaColaObjetos[indiceMin].horaInicioReparacion = horaActual;
-        nuevaColaObjetos[indiceMin].tiempoLlegada = "-";
         rndComplejidad = Math.round(Math.random() * 100) / 100;
         complejidad = rndComplejidad < 0.5 ? complejidad1 : complejidad2;
         nuevaColaObjetos[indiceMin].complejidad = complejidad;
@@ -326,6 +330,7 @@ function generarIteracion(
       EstadoRelojero: estadoRelojero,
       largoColaRelojes: colaRelojes,
       ObjetosTemporales: nuevaColaObjetos,
+      IdsClientes: IdsClientes, // No incrementamos aquí porque no es una llegada
     };
   }
   return evento;
@@ -350,7 +355,7 @@ function calcularTiempoReparacionRK4(a, C, R) {
 
   // f(t, D) = 0.8*C + t + a*R (independiente de D)
   function f(t, D) {
-    return 0.8 * D + t + a * R;
+    return 0.5 * C + t + a * R;
   }
 
   while (D < C) {
@@ -362,6 +367,8 @@ function calcularTiempoReparacionRK4(a, C, R) {
     D = D + (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
     t = t + h;
   }
+
+  t *= 10;
 
   return parseFloat(t.toFixed(2)); // redondeamos para mostrar bonito
 }
