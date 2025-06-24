@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Play, Clock, Eye, Trash } from "lucide-react";
+import { FixedSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+
 import simularSistema from "./logica";
 
 export default function App() {
@@ -11,10 +14,12 @@ export default function App() {
     limiteSuperior: 17,
     complejidad1: 30,
     complejidad2: 50,
-    a: 1,
+    a: -1,
+    h: 0,
   });
 
   const [simulaciones, setSimulaciones] = useState([]);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
   const handleParameterChange = (key, value) => {
     setParameters((prev) => ({
@@ -32,9 +37,37 @@ export default function App() {
       parameters.limiteSuperior < 0 ||
       parameters.complejidad1 < 0 ||
       parameters.complejidad2 < 0 ||
-      parameters.a < 0
+      parameters.a < 0 ||
+      parameters.h < 0
     ) {
       alert("Por favor, ingrese valores positivos para los parámetros.");
+      return;
+    }
+
+    if (parameters.h <= 0) {
+      alert("El parámetro h debe ser mayor que 0 para la simulación.");
+      return;
+    }
+
+    if (parameters.complejidad1 <= 0 || parameters.complejidad2 <= 0) {
+      alert(
+        "Los valores de complejidad deben ser mayores que 0 para la simulación."
+      );
+      return;
+    }
+
+    if (parameters.a)
+      if (parameters.timeX <= parameters.minutoInicio) {
+        alert(
+          "El tiempo a simular debe ser mayor que el minuto de inicio para mostrar resultados."
+        );
+        return;
+      }
+
+    if (parameters.limiteInferior == 0 || parameters.limiteSuperior == 0) {
+      alert(
+        "Los límites inferior y superior de la distribución deben ser mayores que 0."
+      );
       return;
     }
 
@@ -44,7 +77,7 @@ export default function App() {
     }
 
     // Validar que el límite inferior sea menor que el superior
-    if (parameters.limiteInferior >= parameters.limiteSuperior) {
+    if (parameters.limiteInferior > parameters.limiteSuperior) {
       alert(
         "El límite superior debe ser mayor que el límite inferior para la distribución"
       );
@@ -59,6 +92,17 @@ export default function App() {
   const deleteSimulation = () => {
     setSimulaciones([]);
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 200; // Puedes ajustar esto si querés más/menos filas por página
+
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentSimulaciones = simulaciones.slice(
+    indexOfFirstRow,
+    indexOfLastRow
+  );
+  const totalPages = Math.ceil(simulaciones.length / rowsPerPage);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -145,7 +189,7 @@ export default function App() {
                       </label>
                       <input
                         type="number"
-                        value={parameters.limiteInferior}
+                        defaultValue={parameters.limiteInferior}
                         onChange={(e) =>
                           handleParameterChange(
                             "limiteInferior",
@@ -161,7 +205,7 @@ export default function App() {
                       </label>
                       <input
                         type="number"
-                        value={parameters.limiteSuperior}
+                        defaultValue={parameters.limiteSuperior}
                         onChange={(e) =>
                           handleParameterChange(
                             "limiteSuperior",
@@ -220,9 +264,26 @@ export default function App() {
                     </label>
                     <input
                       type="number"
-                      defaultValue={parameters.a}
                       onChange={(e) =>
                         handleParameterChange("a", e.target.value)
+                      }
+                      className="w-full p-2 border border-red-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-red-300">
+                  <h4 className="text-md font-semibold text-red-700 mb-4 text-center">
+                    Parámetro h
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-sm  font-medium text-red-700">
+                      Valor de h
+                    </label>
+                    <input
+                      min={0}
+                      type="number"
+                      onChange={(e) =>
+                        handleParameterChange("h", e.target.value)
                       }
                       className="w-full p-2 border border-red-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     />
@@ -254,132 +315,165 @@ export default function App() {
         </div>
       </div>
       {simulaciones.length > 0 && (
-        <div className="mt-10 bg-white p-6 rounded-xl shadow-lg overflow-auto">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">
-            Resultados de la Simulación
-          </h2>
-          <table className="min-w-full text-sm text-gray-700 border border-gray-300">
-            <thead className="bg-gray-100 sticky top-0">
-              <tr>
-                {/* Encabezados base */}
-                {Object.keys(simulaciones[0])
-                  .filter(
-                    (key) =>
-                      key !== "ObjetosTemporales" && key !== "IdsClientes"
-                  )
-                  .map((key) => (
-                    <th
-                      key={key}
-                      className="px-3 py-2 border border-gray-300 text-left break-words max-w-60px]"
-                    >
-                      {key}
-                    </th>
-                  ))}
-
-                {/* Detectar cuántos relojes como máximo hay */}
-                {(() => {
-                  const maxObjetos = Math.max(
-                    ...simulaciones.map(
-                      (fila) => fila.ObjetosTemporales?.length || 0
-                    )
-                  );
-                  const headers = [];
-                  for (let i = 0; i < maxObjetos; i++) {
-                    // si i es par, cabcera roja, sino azul
-                    const bgColor = i % 2 === 0 ? "bg-red-100" : "bg-blue-100";
-
-                    headers.push(
-                      <th
-                        key={`Estado-${i}`}
-                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
-                      >
-                        Estado Reloj {i + 1}
-                      </th>,
-
-                      <th
-                        key={`Complejidad-${i}`}
-                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
-                      >
-                        Complejidad Reloj {i + 1}
-                      </th>,
-                      <th
-                        key={`Inicio-${i}`}
-                        className={`px-3 py-2 border border-gray-300 ${bgColor}`}
-                      >
-                        Inicio Reparación {i + 1}
-                      </th>
-                    );
-                  }
-                  return headers;
-                })()}
-              </tr>
-            </thead>
-
-            <tbody>
-              {simulaciones.map((fila, i) => (
-                <tr
-                  key={i}
-                  className={
-                    i === simulaciones.length - 1
-                      ? "bg-red-700 text-white"
-                      : "odd:bg-white even:bg-gray-50"
-                  }
-                >
-                  {/* Valores base excepto ObjetosTemporales */}
-                  {Object.entries(fila)
+        <div className="mt-10 bg-white p-6 rounded-xl shadow-lg">
+          <div className="overflow-auto max-h-[75vh]">
+            {" "}
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Resultados de la Simulación
+            </h2>
+            <table className="min-w-full text-sm text-gray-700 border border-gray-300">
+              <thead className="bg-gray-100 sticky top-0">
+                <tr>
+                  {/* Encabezados base */}
+                  {Object.keys(simulaciones[0])
                     .filter(
-                      ([key]) =>
+                      (key) =>
                         key !== "ObjetosTemporales" && key !== "IdsClientes"
                     )
-                    .map(([key, valor], j) => (
-                      <td key={j} className="px-3 py-2 border border-gray-200">
-                        {typeof valor === "object"
-                          ? JSON.stringify(valor)
-                          : valor}
-                      </td>
+                    .map((key) => (
+                      <th
+                        key={key}
+                        className="px-3 py-2 border border-gray-300 text-left break-words max-w-60px]"
+                      >
+                        {key}
+                      </th>
                     ))}
 
-                  {/* Expandir objetos temporales */}
+                  {/* Detectar cuántos relojes como máximo hay */}
                   {(() => {
-                    const columnas = [];
-                    const objetos = fila.ObjetosTemporales || [];
                     const maxObjetos = Math.max(
                       ...simulaciones.map(
-                        (f) => f.ObjetosTemporales?.length || 0
+                        (fila) => fila.ObjetosTemporales?.length || 0
                       )
                     );
+                    const headers = [];
+                    for (let i = 0; i < maxObjetos; i++) {
+                      // si i es par, cabcera roja, sino azul
+                      const bgColor =
+                        i % 2 === 0 ? "bg-red-100" : "bg-blue-100";
 
-                    for (let k = 0; k < maxObjetos; k++) {
-                      const obj = objetos[k];
-                      columnas.push(
-                        <td
-                          key={`estado-${i}-${k}`}
-                          className="px-3 py-2 border border-gray-200"
+                      headers.push(
+                        <th
+                          key={`Estado-${i}`}
+                          className={`px-2 py-2 border border-gray-300 ${bgColor}`}
                         >
-                          {obj ? obj.estado : "-"}
-                        </td>,
+                          Estado Reloj {i + 1}
+                        </th>,
 
-                        <td
-                          key={`comp-${i}-${k}`}
-                          className="px-3 py-2 border border-gray-200"
+                        <th
+                          key={`Complejidad-${i}`}
+                          className={`px-2 py-2 border border-gray-300 ${bgColor}`}
                         >
-                          {obj ? obj.complejidad : "-"}
-                        </td>,
-                        <td
-                          key={`inicio-${i}-${k}`}
-                          className="px-3 py-2 border border-gray-200"
+                          C
+                        </th>,
+                        <th
+                          key={`Inicio-${i}`}
+                          className={`px-2 py-2 border border-gray-300 ${bgColor}`}
                         >
-                          {obj ? obj.horaInicioReparacion : "-"}
-                        </td>
+                          Inicio Reparación
+                        </th>
                       );
                     }
-
-                    return columnas;
+                    return headers;
                   })()}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {currentSimulaciones.map((fila, i) => (
+                  <tr
+                    key={i + indexOfFirstRow}
+                    onClick={() => setSelectedRowIndex(i + indexOfFirstRow)}
+                    className={`cursor-pointer transition-all ${
+                      i + indexOfFirstRow === selectedRowIndex
+                        ? "bg-yellow-200 font-semibold"
+                        : i + indexOfFirstRow === simulaciones.length - 1
+                        ? "bg-red-700 text-white"
+                        : i % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    {/* Valores base excepto ObjetosTemporales */}
+                    {Object.entries(fila)
+                      .filter(
+                        ([key]) =>
+                          key !== "ObjetosTemporales" && key !== "IdsClientes"
+                      )
+                      .map(([key, valor], j) => (
+                        <td
+                          key={j}
+                          className="px-3 py-2 border border-gray-200"
+                        >
+                          {typeof valor === "object"
+                            ? JSON.stringify(valor)
+                            : valor}
+                        </td>
+                      ))}
+
+                    {/* Expandir objetos temporales */}
+                    {(() => {
+                      const columnas = [];
+                      const objetos = fila.ObjetosTemporales || [];
+                      const maxObjetos = Math.max(
+                        ...simulaciones.map(
+                          (f) => f.ObjetosTemporales?.length || 0
+                        )
+                      );
+
+                      for (let k = 0; k < maxObjetos; k++) {
+                        const obj = objetos[k];
+                        columnas.push(
+                          <td
+                            key={`estado-${i}-${k}`}
+                            className="px-3 py-2 border border-gray-200"
+                          >
+                            {obj ? obj.estado : "-"}
+                          </td>,
+
+                          <td
+                            key={`comp-${i}-${k}`}
+                            className="px-3 py-2 border border-gray-200"
+                          >
+                            {obj ? obj.complejidad : "-"}
+                          </td>,
+                          <td
+                            key={`inicio-${i}-${k}`}
+                            className="px-3 py-2 border border-gray-200"
+                          >
+                            {obj ? obj.horaInicioReparacion : "-"}
+                          </td>
+                        );
+                      }
+
+                      return columnas;
+                    })()}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {simulaciones.length > 0 && (
+        <div className="flex justify-center items-center mt-4 gap-4">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+            className="px-4 py-2 rounded bg-blue-500 text-white disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="text-gray-700">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            className="px-4 py-2 rounded bg-blue-500 text-white disabled:opacity-50"
+          >
+            Siguiente
+          </button>
         </div>
       )}
     </div>
