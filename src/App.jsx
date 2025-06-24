@@ -64,13 +64,6 @@ export default function App() {
         return;
       }
 
-    if (parameters.limiteInferior == 0 || parameters.limiteSuperior == 0) {
-      alert(
-        "Los límites inferior y superior de la distribución deben ser mayores que 0."
-      );
-      return;
-    }
-
     if (parameters.iterations < 1) {
       alert("La cantidad de iteraciones debe ser al menos 1.");
       return;

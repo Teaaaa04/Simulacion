@@ -29,7 +29,7 @@ export default function simularSistema(parametros) {
   let colaRelojes = 0;
   let objetosTemporales = [];
 
-  while (horaActual < timeX) {
+  while (horaActual < timeX && numeroIteracion < 10000) {
     const evento = generarIteracion(
       proximoEvento,
       numeroIteracion,
