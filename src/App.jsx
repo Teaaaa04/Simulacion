@@ -19,6 +19,8 @@ export default function App() {
   });
 
   const [simulaciones, setSimulaciones] = useState([]);
+  const [promedios, setPromedios] = useState(null);
+
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
   const handleParameterChange = (key, value) => {
@@ -78,8 +80,10 @@ export default function App() {
     }
 
     // Simular el proceso de simulación
-    const simulacion = simularSistema(parameters);
-    setSimulaciones(simulacion);
+    const { simulacion2, promedios } = simularSistema(parameters);
+    setPromedios(promedios);
+
+    setSimulaciones(simulacion2);
   };
 
   const deleteSimulation = () => {
@@ -424,7 +428,9 @@ export default function App() {
                             key={`estado-${i}-${k}`}
                             className="px-3 py-2 border border-gray-200"
                           >
-                            {obj ? obj.estado : "-"}
+                            {obj && obj.estado !== "-"
+                              ? `${obj.estado} (${obj.id})`
+                              : "-"}
                           </td>,
 
                           <td
@@ -470,6 +476,31 @@ export default function App() {
           >
             Siguiente
           </button>
+        </div>
+      )}
+      {promedios && (
+        <div className="mt-6 bg-white rounded-xl shadow-md p-6 max-w-xl mx-auto text-center">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Promedios de Tiempo de Reparación
+          </h3>
+          <div className="grid grid-cols-2 gap-4 text-gray-700">
+            <div>
+              <p className="font-medium text-blue-700">
+                Complejidad {parameters.complejidad1}
+              </p>
+              <p className="text-xl">
+                {promedios.promedioTiempoReparacion30} min
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-red-700">
+                Complejidad {parameters.complejidad2}
+              </p>
+              <p className="text-xl">
+                {promedios.promedioTiempoReparacion50} min
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

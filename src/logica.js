@@ -59,10 +59,10 @@ export default function simularSistema(parametros) {
     finReparacion = evento.FinReparacion;
     proximaLlegada = evento.ProxLlegada;
     colaRelojes = evento.ColaRelojes;
-    contadorComplejidad30 = evento.ContComp30;
-    contadorComplejidad50 = evento.ContComp50;
-    acumuladorTiempoComplejidad30 = evento.AC_TiempoComp30;
-    acumuladorTiempoComplejidad50 = evento.AC_TiempoComp50;
+    contadorComplejidad30 = evento.contComp1;
+    contadorComplejidad50 = evento.contComp2;
+    acumuladorTiempoComplejidad30 = evento.AC_TiempoComp1;
+    acumuladorTiempoComplejidad50 = evento.AC_TiempoComp2;
 
     if (
       evento.ProxLlegada < evento.FinReparacion ||
@@ -97,10 +97,10 @@ export default function simularSistema(parametros) {
     C: "-",
     TiempoReparacion: "-",
     FinReparacion: finReparacion,
-    ContComp30: contadorComplejidad30,
-    ContComp50: contadorComplejidad50,
-    AC_TiempoComp30: acumuladorTiempoComplejidad30,
-    AC_TiempoComp50: acumuladorTiempoComplejidad50,
+    contComp1: contadorComplejidad30,
+    contComp2: contadorComplejidad50,
+    AC_TiempoComp1: acumuladorTiempoComplejidad30,
+    AC_TiempoComp2: acumuladorTiempoComplejidad50,
     EstadoRelojero: finReparacion == "-" ? "Libre" : "Ocupado",
     ColaRelojes: colaRelojes,
     ObjetosTemporales: copiarObjetosProfundo(objetosTemporales),
@@ -111,7 +111,18 @@ export default function simularSistema(parametros) {
 
   let simulacion2 = recortarVector(minutoInicio, iterations, simulacion);
 
-  return simulacion2;
+  let ultimo = simulacion2[simulacion2.length - 1];
+
+  let promedios = {
+    promedioTiempoReparacion30: ultimo.contComp1
+      ? Number((ultimo.AC_TiempoComp1 / ultimo.contComp1).toFixed(2))
+      : 0,
+    promedioTiempoReparacion50: ultimo.contComp2
+      ? Number((ultimo.AC_TiempoComp2 / ultimo.contComp2).toFixed(2))
+      : 0,
+  };
+
+  return { simulacion2, promedios };
 }
 
 // NUEVA FUNCIÓN: Crear copia profunda de objetos
@@ -164,10 +175,10 @@ function generarIteracion(
       C: "-",
       TiempoReparacion: "-",
       FinReparacion: "-",
-      ContComp30: contadorComplejidad30,
-      ContComp50: contadorComplejidad50,
-      AC_TiempoComp30: Number(acumuladorTiempoComplejidad30.toFixed(2)),
-      AC_TiempoComp50: Number(acumuladorTiempoComplejidad50.toFixed(2)),
+      contComp1: contadorComplejidad30,
+      contComp2: contadorComplejidad50,
+      AC_TiempoComp1: Number(acumuladorTiempoComplejidad30.toFixed(2)),
+      AC_TiempoComp2: Number(acumuladorTiempoComplejidad50.toFixed(2)),
       EstadoRelojero: "Libre",
       ColaRelojes: colaRelojes,
       ObjetosTemporales: [],
@@ -230,10 +241,10 @@ function generarIteracion(
       TiempoReparacion:
         tiempoReparacion == "-" ? "-" : Number(tiempoReparacion.toFixed(2)),
       FinReparacion: Number(finReparacion.toFixed(2)),
-      ContComp30: contadorComplejidad30,
-      ContComp50: contadorComplejidad50,
-      AC_TiempoComp30: Number(acumuladorTiempoComplejidad30.toFixed(2)),
-      AC_TiempoComp50: Number(acumuladorTiempoComplejidad50.toFixed(2)),
+      contComp1: contadorComplejidad30,
+      contComp2: contadorComplejidad50,
+      AC_TiempoComp1: Number(acumuladorTiempoComplejidad30.toFixed(2)),
+      AC_TiempoComp2: Number(acumuladorTiempoComplejidad50.toFixed(2)),
       EstadoRelojero: "Ocupado",
       ColaRelojes: colaRelojes,
       ObjetosTemporales: nuevaColaObjetos2,
@@ -263,10 +274,10 @@ function generarIteracion(
 
       const tiempoAcumulado = horaActual - inicioReparacion;
 
-      if (complejidadCliente === 30) {
+      if (complejidadCliente === complejidad1) {
         contadorComplejidad30++;
         acumuladorTiempoComplejidad30 += tiempoAcumulado;
-      } else if (complejidadCliente === 50) {
+      } else if (complejidadCliente === complejidad2) {
         contadorComplejidad50++;
         acumuladorTiempoComplejidad50 += tiempoAcumulado;
       }
@@ -340,10 +351,10 @@ function generarIteracion(
           : Number(tiempoReparacion.toFixed(2)),
       FinReparacion:
         finReparacion == "-" ? "-" : Number(finReparacion.toFixed(2)),
-      ContComp30: contadorComplejidad30,
-      ContComp50: contadorComplejidad50,
-      AC_TiempoComp30: Number(acumuladorTiempoComplejidad30.toFixed(2)),
-      AC_TiempoComp50: Number(acumuladorTiempoComplejidad50.toFixed(2)),
+      contComp1: contadorComplejidad30,
+      contComp2: contadorComplejidad50,
+      AC_TiempoComp1: Number(acumuladorTiempoComplejidad30.toFixed(2)),
+      AC_TiempoComp2: Number(acumuladorTiempoComplejidad50.toFixed(2)),
       EstadoRelojero: estadoRelojero,
       ColaRelojes: colaRelojes,
       ObjetosTemporales: nuevaColaObjetos,
