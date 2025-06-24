@@ -23,6 +23,10 @@ export default function App() {
 
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
+  const grupo1 = ["RND", "TiempoLlegada", "ProxLlegada"];
+  const grupo2 = ["RND_C", "C", "TiempoReparacion", "FinReparacion"];
+  const grupo3 = ["contComp1", "contComp2", "AC_TiempoComp1", "AC_TiempoComp2"];
+
   const handleParameterChange = (key, value) => {
     setParameters((prev) => ({
       ...prev,
@@ -88,6 +92,7 @@ export default function App() {
 
   const deleteSimulation = () => {
     setSimulaciones([]);
+    setPromedios(null);
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -330,14 +335,23 @@ export default function App() {
                       (key) =>
                         key !== "ObjetosTemporales" && key !== "IdsClientes"
                     )
-                    .map((key) => (
-                      <th
-                        key={key}
-                        className="px-3 py-2 border border-gray-300 text-left break-words max-w-60px]"
-                      >
-                        {key}
-                      </th>
-                    ))}
+                    .map((key) => {
+                      const bgColor = grupo1.includes(key)
+                        ? "bg-blue-200"
+                        : grupo2.includes(key)
+                        ? "bg-green-200"
+                        : grupo3.includes(key)
+                        ? "bg-pink-200"
+                        : "bg-gray-100";
+                      return (
+                        <th
+                          key={key}
+                          className={`px-3 py-2 border border-gray-300 text-left break-words ${bgColor}`}
+                        >
+                          {key}
+                        </th>
+                      );
+                    })}
 
                   {/* Detectar cuántos relojes como máximo hay */}
                   {(() => {

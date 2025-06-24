@@ -83,7 +83,6 @@ export default function simularSistema(parametros) {
     simulacion.push(evento);
   }
 
-  descargarExcel("resultado_euler.xlsx");
   console.log("Simulación generada con éxito");
 
   let finSimulacion = {
@@ -110,6 +109,29 @@ export default function simularSistema(parametros) {
   simulacion.push(finSimulacion);
 
   let simulacion2 = recortarVector(minutoInicio, iterations, simulacion);
+
+  // Generar el Excel solo con las filas recortadas
+  const procesados = new Set();
+
+  simulacion2.forEach((evento) => {
+    evento.ObjetosTemporales.forEach((obj) => {
+      if (obj.estado === "En reparación") {
+        const C = obj.complejidad;
+        const R = evento.ColaRelojes;
+        const hLocal = h;
+        const clave = `${obj.id}`;
+
+        if (!procesados.has(clave)) {
+          procesados.add(clave);
+
+          const pasos = calcularPasosEuler(a, hLocal, C, R);
+          const nombreHoja = `C${obj.id}_R${R}`;
+          agregarHojaExcel(nombreHoja, pasos, hLocal);
+        }
+      }
+    });
+  });
+  descargarExcel("resultado_euler.xlsx");
 
   let ultimo = simulacion2[simulacion2.length - 1];
 
@@ -423,11 +445,31 @@ function calcularTiempoReparacionEuler(a, h, C, R) {
 
   t *= 10;
 
-  let nombreHoja = `C${C}_R${R}`;
+  // let nombreHoja = `C${C}_R${R}`;
 
-  agregarHojaExcel(nombreHoja, pasos, h);
+  // agregarHojaExcel(nombreHoja, pasos, h);
 
   // exportToExcel(pasos, "resultado_euler");
 
   return parseFloat(t.toFixed(2));
+}
+
+function calcularPasosEuler(a, h, C, R) {
+  let t = 0;
+  let D = 0;
+  let pasos = [];
+
+  function f(t, D) {
+    return 0.5 * C + t + a * R;
+  }
+
+  while (D < C) {
+    const dD = f(t, D);
+    pasos.push({ t, D, dD });
+    D = D + h * dD;
+    t = t + h;
+  }
+
+  t *= 10;
+  return pasos;
 }

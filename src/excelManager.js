@@ -1,9 +1,18 @@
 import * as XLSX from "xlsx";
-let contadorHojas = 1;
 
-const workbook = XLSX.utils.book_new(); // se mantiene en memoria
+let contadorHojas;
+let workbook;
+
+function inicializarWorkbook() {
+  contadorHojas = 1;
+  workbook = XLSX.utils.book_new(); // Crear un nuevo workbook
+}
 
 export function agregarHojaExcel(nombreBase, pasos, h) {
+  if (!workbook) {
+    inicializarWorkbook(); // Asegurarse de que el workbook esté inicializado
+  }
+
   let nombreHoja = `${contadorHojas.toString().padStart(3, "0")}_${nombreBase}`;
   contadorHojas++;
 
@@ -19,9 +28,6 @@ export function agregarHojaExcel(nombreBase, pasos, h) {
     const t_next = parseFloat(pasos[i + 1]?.t || t_i + h);
     const D_next = parseFloat(pasos[i + 1]?.D || D_i + h * f_i);
 
-    // const t_next = (t_i + h).toFixed(2);
-    // const D_next = (D_i + h * f_i).toFixed(4);
-
     worksheetData.push([i, t_i, D_i, f_i, t_next, D_next]);
   }
 
@@ -30,5 +36,9 @@ export function agregarHojaExcel(nombreBase, pasos, h) {
 }
 
 export function descargarExcel(nombreArchivo = "integraciones_euler.xlsx") {
+  if (!workbook) {
+    inicializarWorkbook(); // Asegurarse de que el workbook esté inicializado
+  }
   XLSX.writeFile(workbook, nombreArchivo);
+  inicializarWorkbook(); // Reiniciar workbook después de guardar
 }
