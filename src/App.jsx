@@ -7,15 +7,15 @@ import simularSistema from "./logica";
 
 export default function App() {
   const [parameters, setParameters] = useState({
-    timeX: 0,
+    timeX: 10,
     minutoInicio: 0,
-    iterations: 0,
+    iterations: 10,
     limiteInferior: 13,
     limiteSuperior: 17,
     complejidad1: 30,
     complejidad2: 50,
     a: -1,
-    h: 0,
+    h: 0.1,
   });
 
   const [simulaciones, setSimulaciones] = useState([]);
@@ -145,6 +145,7 @@ export default function App() {
                   <input
                     type="number"
                     placeholder="Ingresar valor"
+                    value={parameters.minutoInicio}
                     onChange={(e) =>
                       handleParameterChange("minutoInicio", e.target.value)
                     }
@@ -160,6 +161,7 @@ export default function App() {
                   <input
                     type="number"
                     placeholder="Ingresar valor"
+                    value={parameters.iterations}
                     onChange={(e) =>
                       handleParameterChange("iterations", e.target.value)
                     }
@@ -282,6 +284,7 @@ export default function App() {
                     <input
                       min={0}
                       type="number"
+                      defaultValue={parameters.h}
                       onChange={(e) =>
                         handleParameterChange("h", e.target.value)
                       }

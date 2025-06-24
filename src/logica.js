@@ -1,3 +1,6 @@
+import { agregarHojaExcel } from "./excelManager";
+import { descargarExcel } from "./excelManager";
+
 export default function simularSistema(parametros) {
   const simulacion = [];
 
@@ -80,6 +83,7 @@ export default function simularSistema(parametros) {
     simulacion.push(evento);
   }
 
+  descargarExcel("resultado_euler.xlsx");
   console.log("Simulación generada con éxito");
 
   let finSimulacion = {
@@ -392,6 +396,7 @@ function recortarVector(minutoInicio, iteraciones, simulacion) {
 function calcularTiempoReparacionEuler(a, h, C, R) {
   let t = 0;
   let D = 0;
+  let pasos = [];
 
   // f(t, D) = 0.5 * C + t + a * R
   function f(t, D) {
@@ -400,11 +405,18 @@ function calcularTiempoReparacionEuler(a, h, C, R) {
 
   while (D < C) {
     const dD = f(t, D); // derivada
+    pasos.push({ t, D, dD });
     D = D + h * dD; // actualización de D
     t = t + h; // actualización de t
   }
 
   t *= 10;
+
+  let nombreHoja = `C${C}_R${R}`;
+
+  agregarHojaExcel(nombreHoja, pasos, h);
+
+  // exportToExcel(pasos, "resultado_euler");
 
   return parseFloat(t.toFixed(2));
 }
